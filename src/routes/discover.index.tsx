@@ -187,8 +187,8 @@ function Discover() {
             <div className="mt-6 font-label text-[10px] font-bold text-muted-foreground">Price</div>
             <Slider value={price} onValueChange={setPrice} min={0} max={15000} step={250} className="mt-4" />
             <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-              <span>₹{price[0].toLocaleString("en-IN")}</span>
-              <span>₹{price[1].toLocaleString("en-IN")}</span>
+              <span>₹{(price[0] ?? 0).toLocaleString("en-IN")}</span>
+              <span>₹{(price[1] ?? 0).toLocaleString("en-IN")}</span>
             </div>
 
             <div className="mt-6 font-label text-[10px] font-bold text-muted-foreground">Size</div>

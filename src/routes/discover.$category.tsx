@@ -43,7 +43,7 @@ export const Route = createFileRoute("/discover/$category")({
 });
 
 function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) {
-  const v = p.variants[variantIndex % p.variants.length];
+  const v = p.variants[variantIndex % p.variants.length]!;
   return (
     <div className="relative size-full bg-card">
       <img src={p.image} alt={p.name} className="size-full object-cover" draggable={false} />
@@ -106,11 +106,12 @@ function CategoryDeck() {
   const onSwipe = useCallback(
     (dir: SwipeDir, p: Product): "stay" | void => {
       const vi = (variants[p.id] ?? 0) % p.variants.length;
-      const v = p.variants[vi];
+      const v = p.variants[vi]!;
       if (dir === "up") {
         const next = (vi + 1) % p.variants.length;
         setVariants((s) => ({ ...s, [p.id]: next }));
-        toast(`Now showing ${p.variants[next].brand}`, { description: `${p.name} · ${formatPrice(p.variants[next].price)}` });
+        const nv = p.variants[next]!;
+        toast(`Now showing ${nv.brand}`, { description: `${p.name} · ${formatPrice(nv.price)}` });
         return "stay";
       }
       if (dir === "right") {

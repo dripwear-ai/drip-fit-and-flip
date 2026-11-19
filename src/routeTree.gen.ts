@@ -10,12 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as WishlistRouteImport } from './routes/wishlist'
 import { Route as DiscoverIndexRouteImport } from './routes/discover.index'
 import { Route as DiscoverCategoryRouteImport } from './routes/discover.$category'
+import { Route as OotdIndexRouteImport } from './routes/ootd.index'
+import { Route as OotdTryOnRouteImport } from './routes/ootd.try-on'
+import { Route as OotdWardrobeRouteImport } from './routes/ootd.wardrobe'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WishlistRoute = WishlistRouteImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscoverIndexRoute = DiscoverIndexRouteImport.update({
@@ -28,35 +37,88 @@ const DiscoverCategoryRoute = DiscoverCategoryRouteImport.update({
   path: '/discover/$category',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OotdIndexRoute = OotdIndexRouteImport.update({
+  id: '/ootd/',
+  path: '/ootd/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OotdTryOnRoute = OotdTryOnRouteImport.update({
+  id: '/ootd/try-on',
+  path: '/ootd/try-on',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OotdWardrobeRoute = OotdWardrobeRouteImport.update({
+  id: '/ootd/wardrobe',
+  path: '/ootd/wardrobe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/wishlist': typeof WishlistRoute
   '/discover/$category': typeof DiscoverCategoryRoute
+  '/ootd/try-on': typeof OotdTryOnRoute
+  '/ootd/wardrobe': typeof OotdWardrobeRoute
   '/discover/': typeof DiscoverIndexRoute
+  '/ootd/': typeof OotdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/wishlist': typeof WishlistRoute
   '/discover/$category': typeof DiscoverCategoryRoute
+  '/ootd/try-on': typeof OotdTryOnRoute
+  '/ootd/wardrobe': typeof OotdWardrobeRoute
   '/discover': typeof DiscoverIndexRoute
+  '/ootd': typeof OotdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/wishlist': typeof WishlistRoute
   '/discover/$category': typeof DiscoverCategoryRoute
+  '/ootd/try-on': typeof OotdTryOnRoute
+  '/ootd/wardrobe': typeof OotdWardrobeRoute
   '/discover/': typeof DiscoverIndexRoute
+  '/ootd/': typeof OotdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/discover/$category' | '/discover/'
+  fullPaths:
+    | '/'
+    | '/wishlist'
+    | '/discover/$category'
+    | '/ootd/try-on'
+    | '/ootd/wardrobe'
+    | '/discover/'
+    | '/ootd/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/discover/$category' | '/discover'
-  id: '__root__' | '/' | '/discover/$category' | '/discover/'
+  to:
+    | '/'
+    | '/wishlist'
+    | '/discover/$category'
+    | '/ootd/try-on'
+    | '/ootd/wardrobe'
+    | '/discover'
+    | '/ootd'
+  id:
+    | '__root__'
+    | '/'
+    | '/wishlist'
+    | '/discover/$category'
+    | '/ootd/try-on'
+    | '/ootd/wardrobe'
+    | '/discover/'
+    | '/ootd/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  WishlistRoute: typeof WishlistRoute
   DiscoverCategoryRoute: typeof DiscoverCategoryRoute
+  OotdTryOnRoute: typeof OotdTryOnRoute
+  OotdWardrobeRoute: typeof OotdWardrobeRoute
   DiscoverIndexRoute: typeof DiscoverIndexRoute
+  OotdIndexRoute: typeof OotdIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -66,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover/': {
@@ -82,13 +151,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverCategoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ootd/': {
+      id: '/ootd/'
+      path: '/ootd'
+      fullPath: '/ootd/'
+      preLoaderRoute: typeof OotdIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ootd/try-on': {
+      id: '/ootd/try-on'
+      path: '/ootd/try-on'
+      fullPath: '/ootd/try-on'
+      preLoaderRoute: typeof OotdTryOnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ootd/wardrobe': {
+      id: '/ootd/wardrobe'
+      path: '/ootd/wardrobe'
+      fullPath: '/ootd/wardrobe'
+      preLoaderRoute: typeof OotdWardrobeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  WishlistRoute: WishlistRoute,
   DiscoverCategoryRoute: DiscoverCategoryRoute,
+  OotdTryOnRoute: OotdTryOnRoute,
+  OotdWardrobeRoute: OotdWardrobeRoute,
   DiscoverIndexRoute: DiscoverIndexRoute,
+  OotdIndexRoute: OotdIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

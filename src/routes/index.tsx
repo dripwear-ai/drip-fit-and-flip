@@ -36,20 +36,20 @@ function StyleFan() {
   const fanLooks = looks.slice(0, 3);
 
   useEffect(() => {
-    const t = window.setInterval(() => setOrder((o) => [o[2], o[0], o[1]]), 3800);
+    const t = window.setInterval(() => setOrder((o) => [o[2]!, o[0]!, o[1]!]), 3800);
     return () => window.clearInterval(t);
   }, []);
 
   return (
     <div className="relative mx-auto h-[430px] w-full">
       {fanLooks.map((look, i) => {
-        const slot = fan[order.indexOf(i)];
+        const slot = fan[order.indexOf(i)] ?? fan[2]!;
         const front = slot.z === 3;
         return (
           <button
             key={look.id}
             type="button"
-            onClick={() => setOrder((o) => [o[2], o[0], o[1]])}
+            onClick={() => setOrder((o) => [o[2]!, o[0]!, o[1]!])}
             className="absolute left-1/2 top-0 h-[400px] w-[255px] overflow-hidden rounded-[1.75rem] shadow-card transition-all duration-700 ease-[cubic-bezier(.2,.8,.2,1)]"
             style={{
               transform: `translateX(calc(-50% + ${slot.x}px)) translateY(${slot.y}px) rotate(${slot.rotate}deg) scale(${front ? 1 : 0.9})`,
