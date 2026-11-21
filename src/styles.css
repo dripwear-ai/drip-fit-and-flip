@@ -309,3 +309,23 @@
     transform: translateY(0);
   }
 }
+
+@utility skeleton-sheen {
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    oklch(0.95 0.018 85 / 6%) 40%,
+    oklch(0.95 0.018 85 / 12%) 50%,
+    oklch(0.95 0.018 85 / 6%) 60%,
+    transparent 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* Google sign-in button: colours fixed by Google's branding guidelines */
+@utility google-button {
+  background: #ffffff;
+  color: #1f1f1f;
+  border: 1px solid #747775;
+}

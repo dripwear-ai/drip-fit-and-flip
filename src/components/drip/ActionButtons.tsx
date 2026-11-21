@@ -1,18 +1,31 @@
-import { ArrowUp, Heart, ShoppingBag, X } from "lucide-react";
+import { ArrowUp, Heart, RotateCcw, ShoppingBag, X } from "lucide-react";
 import type { SwipeDir } from "./SwipeDeck";
 import { cn } from "@/lib/utils";
 
 type Props = {
   onAction: (dir: SwipeDir) => void;
+  onUndo?: () => void;
+  canUndo?: boolean;
   upLabel?: string;
   rightKind?: "heart" | "bag";
   className?: string;
 };
 
-export function ActionButtons({ onAction, upLabel, rightKind = "heart", className }: Props) {
+export function ActionButtons({ onAction, onUndo, canUndo = false, upLabel, rightKind = "heart", className }: Props) {
   const Right = rightKind === "heart" ? Heart : ShoppingBag;
   return (
-    <div className={cn("flex items-center justify-center gap-5", className)}>
+    <div className={cn("flex items-center justify-center gap-4", className)}>
+      {onUndo && (
+        <button
+          type="button"
+          aria-label="Undo last swipe"
+          onClick={onUndo}
+          disabled={!canUndo}
+          className="glass grid size-11 place-items-center rounded-full text-foreground transition hover:scale-110 active:scale-95 disabled:opacity-30 disabled:hover:scale-100"
+        >
+          <RotateCcw className="size-4" strokeWidth={2.6} />
+        </button>
+      )}
       <button
         type="button"
         aria-label="Skip"

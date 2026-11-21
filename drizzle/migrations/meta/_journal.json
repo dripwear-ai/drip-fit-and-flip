@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795251654994,
+      "tag": "0000_drip_catalog_wishlist_swipes",
+      "breakpoints": true
+    }
+  ]
+}
