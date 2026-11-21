@@ -61,7 +61,7 @@ function TopCard({
   progress: MotionValue<number>;
   onCommit: (dir: SwipeDir) => void;
   onFlip: () => void;
-  onTap?: () => void;
+  onTap?: (() => void) | undefined;
   ref?: Ref<CardHandle>;
 }) {
   const width = typeof window === "undefined" ? 400 : Math.min(window.innerWidth, 440);
@@ -187,7 +187,7 @@ function BehindCard({ children, depth, progress }: { children: ReactNode; depth:
   );
 }
 
-export function SwipeDeckSkeleton({ className }: { className?: string }) {
+export function SwipeDeckSkeleton({ className }: { className?: string | undefined }) {
   return (
     <div className={cn("relative", className)} aria-busy="true" aria-label="Loading cards">
       <div className="absolute inset-0 translate-y-7 scale-90 rounded-[2rem] bg-card/50" />
