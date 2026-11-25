@@ -229,6 +229,12 @@
   border: 1px solid oklch(0.95 0.018 85 / 12%);
 }
 
+/* Same look as glass without the live blur: use on anything inside a moving swipe card. */
+@utility glass-flat {
+  background: color-mix(in oklab, var(--background) 62%, transparent);
+  border: 1px solid oklch(0.95 0.018 85 / 12%);
+}
+
 @utility shadow-card {
   box-shadow: var(--shadow-card);
 }

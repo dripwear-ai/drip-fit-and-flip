@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Box, RotateCcw, Shirt } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActionButtons } from "@/components/drip/ActionButtons";
 import { SwipeDeck, type SwipeDeckHandle } from "@/components/drip/SwipeDeck";
+import { useOutfits, useSwipes } from "@/hooks/use-drip-data";
 import { TopBar } from "@/components/drip/TopBar";
-import { formatPrice, lookTotal, looks } from "@/lib/catalog";
+import { formatPrice, lookTotal } from "@/lib/catalog";
 import { dripActions } from "@/lib/drip-store";
 
 export const Route = createFileRoute("/ootd/")({
@@ -24,6 +25,10 @@ export const Route = createFileRoute("/ootd/")({
 
 function Ootd() {
   const deck = useRef<SwipeDeckHandle>(null);
+  const outfits = useOutfits();
+  const swipes = useSwipes();
+  const swipeIds = useRef<Promise<string | null>[]>([]);
+  const [canUndo, setCanUndo] = useState(false);
   return (
     <main className="flex h-dvh flex-col pb-24">
       <TopBar title="Outfit of the day" />
@@ -40,11 +45,22 @@ function Ootd() {
       <div className="relative mt-3 flex-1 px-3">
         <SwipeDeck
           ref={deck}
-          items={looks}
+          items={outfits.data ?? []}
+          loading={outfits.isLoading}
+          getImage={(l) => l.image}
+          onHistoryChange={setCanUndo}
+          onUndo={(dir, l) => {
+            void swipes.remove(swipeIds.current.pop() ?? null);
+            if (dir === "right") {
+              dripActions.removeFromBag(l.id);
+              toast("Removed from bag", { description: l.title });
+            }
+          }}
           getKey={(l) => l.id}
           labels={{ left: "Pass", right: "Cop it" }}
           className="size-full"
           onSwipe={(dir, l) => {
+            swipeIds.current.push(swipes.record(dir, { outfitId: l.id }));
             if (dir === "right") {
               dripActions.addToBag({ key: l.id, name: l.title, brand: l.creator, price: lookTotal(l), image: l.image, kind: "look" });
               toast.success("Full look added to bag", { description: `${l.title} · ${formatPrice(lookTotal(l))}` });
@@ -72,8 +88,8 @@ function Ootd() {
           empty={
             <div className="grid size-full place-items-center rounded-[2rem] border border-dashed border-border text-center">
               <div>
-                <div className="font-display text-4xl italic">That’s today’s fits.</div>
-                <button type="button" onClick={() => deck.current?.reset()} className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 font-label text-[10px] font-bold text-primary-foreground">
+                <div className="font-display text-4xl italic">{outfits.isError ? "Couldn’t load today’s fits." : "That’s today’s fits."}</div>
+                <button type="button" onClick={() => (outfits.isError ? void outfits.refetch() : deck.current?.reset())} className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 font-label text-[10px] font-bold text-primary-foreground">
                   <RotateCcw className="size-3.5" /> Start over
                 </button>
               </div>
@@ -81,7 +97,7 @@ function Ootd() {
           }
         />
       </div>
-      <ActionButtons className="mt-4" rightKind="bag" onAction={(d) => deck.current?.swipe(d)} />
+      <ActionButtons className="mt-4" rightKind="bag" canUndo={canUndo} onUndo={() => deck.current?.undo()} onAction={(d) => deck.current?.swipe(d)} />
     </main>
   );
 }

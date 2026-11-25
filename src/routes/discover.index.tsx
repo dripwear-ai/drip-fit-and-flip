@@ -41,8 +41,8 @@ function CategoryCard({ c }: { c: Category }) {
       <img src={c.cover} alt={c.name} className="size-full object-cover" draggable={false} />
       <div className="scrim absolute inset-0" />
       <div className="absolute left-4 top-4 flex gap-2">
-        <span className="glass rounded-full px-3 py-1.5 font-label text-[10px] font-bold">{c.pieces} pieces</span>
-        <span className="glass rounded-full px-3 py-1.5 font-label text-[10px] font-bold">{c.brands} brands</span>
+        <span className="glass-flat rounded-full px-3 py-1.5 font-label text-[10px] font-bold">{c.pieces} pieces</span>
+        <span className="glass-flat rounded-full px-3 py-1.5 font-label text-[10px] font-bold">{c.brands} brands</span>
       </div>
       <div className="absolute inset-x-0 bottom-0 p-6">
         <div className="font-label text-[10px] font-bold text-primary">{c.tagline}</div>

@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, Heart, ShoppingBag } from "lucide-react";
+import { ChevronLeft, Heart, ShoppingBag, User } from "lucide-react";
 import type { ReactNode } from "react";
-import { useDrip } from "@/lib/drip-store";
+import { useProfile } from "@/hooks/use-drip-data";
+import { useSaved } from "@/hooks/use-saved";
 import { cn } from "@/lib/utils";
 
 export function DripLogo({ className }: { className?: string }) {
@@ -30,7 +31,10 @@ export function IconBadgeLink({ to, label, count, children }: { to: "/wishlist";
 }
 
 export function TopBar({ title, back, overlay = false }: { title?: ReactNode; back?: boolean; overlay?: boolean }) {
-  const { wishlist, bag } = useDrip();
+  const { count, bag, signedIn } = useSaved();
+  const profile = useProfile();
+  const avatar = signedIn ? profile.data?.avatar_url : null;
+  const initial = profile.data?.display_name?.trim().charAt(0).toUpperCase();
   return (
     <header
       className={cn(
@@ -54,12 +58,25 @@ export function TopBar({ title, back, overlay = false }: { title?: ReactNode; ba
         {title && <div className="truncate font-label text-xs font-bold">{title}</div>}
       </div>
       <div className="flex items-center gap-2">
-        <IconBadgeLink to="/wishlist" label="Wishlist" count={wishlist.length}>
+        <IconBadgeLink to="/wishlist" label="Wishlist" count={count}>
           <Heart className="size-[18px]" />
         </IconBadgeLink>
         <IconBadgeLink to="/wishlist" label="Bag" count={bag.length}>
           <ShoppingBag className="size-[18px]" />
         </IconBadgeLink>
+        <Link
+          to="/auth"
+          aria-label={signedIn ? "Your account" : "Sign in"}
+          className="glass grid size-10 place-items-center overflow-hidden rounded-full text-foreground transition hover:scale-105"
+        >
+          {avatar ? (
+            <img src={avatar} alt="" className="size-full object-cover" referrerPolicy="no-referrer" />
+          ) : signedIn && initial ? (
+            <span className="font-label text-xs font-extrabold text-primary">{initial}</span>
+          ) : (
+            <User className="size-[18px]" />
+          )}
+        </Link>
       </div>
     </header>
   );

@@ -7,6 +7,9 @@ export type SavedItem = {
   price: number;
   image: string;
   kind: "piece" | "look";
+  /** Database ids, so a signed-out save can move to the account after sign-in. */
+  productId?: string;
+  variantId?: string;
 };
 
 type State = { wishlist: SavedItem[]; bag: SavedItem[] };

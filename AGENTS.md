@@ -28,3 +28,9 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+
+- Screens read and write the wishlist only through `useSaved` (`src/hooks/use-saved.ts`): it picks the account wishlist when signed in and the device store when signed out, and `SavedSync` moves device saves into the account on sign-in. Why: one place decides where a save lives.
+- Nothing inside a swipe card may use `glass` (backdrop blur) or blend modes; use `glass-flat`. Why: live blur inside a 3D-transformed card makes the drag and brand flip stutter.
+- The swipe-up brand flip must not await the recentre springs or trigger toasts/network work. Why: anything awaited before the flip is felt as lag.

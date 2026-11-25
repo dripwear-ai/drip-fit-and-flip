@@ -39,6 +39,7 @@ type Props<T> = {
 };
 
 const SPRING = { type: "spring" as const, stiffness: 420, damping: 32, mass: 0.9 };
+const SNAP = { type: "spring" as const, stiffness: 700, damping: 45, mass: 0.6 };
 const PRELOAD = 3;
 
 type CardHandle = { fly: (dir: SwipeDir) => void };
@@ -72,8 +73,8 @@ function TopCard({
   const likeOpacity = useTransform(x, [24, 130], [0, 1]);
   const nopeOpacity = useTransform(x, [-130, -24], [1, 0]);
   const upOpacity = useTransform(y, [-130, -24], [1, 0]);
-  const likeTint = useTransform(likeOpacity, (v) => v * 0.45);
-  const nopeTint = useTransform(nopeOpacity, (v) => v * 0.45);
+  const likeTint = useTransform(likeOpacity, (v) => v * 0.3);
+  const nopeTint = useTransform(nopeOpacity, (v) => v * 0.3);
   const busy = useRef(false);
   const armed = useRef<SwipeDir | null>(null);
 
@@ -102,15 +103,14 @@ function TopCard({
       busy.current = true;
       if (dir === "up") {
         haptic([6, 40, 10]);
-        await Promise.all([
-          animate(x, 0, SPRING),
-          animate(y, 0, SPRING),
-          animate(rotateX, 90, { duration: 0.17, ease: "easeIn" }),
-        ]);
+        // Recentre in the background; never wait for those springs to settle before flipping.
+        void animate(x, 0, SNAP);
+        void animate(y, 0, SNAP);
+        await animate(rotateX, 90, { duration: 0.11, ease: "easeIn" });
         onFlip();
         rotateX.set(-90);
-        await animate(rotateX, 0, { type: "spring", stiffness: 260, damping: 20 });
-        busy.current = false;
+        busy.current = false; // the next gesture can start while the card settles
+        void animate(rotateX, 0, { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] });
         return;
       }
       haptic(dir === "right" ? [14] : [8]);
@@ -142,7 +142,7 @@ function TopCard({
       role="group"
       aria-label="Swipe card"
       className="absolute inset-0 z-20 cursor-grab touch-none overflow-hidden rounded-[2rem] shadow-card active:cursor-grabbing"
-      style={{ x, y, rotate, rotateX, transformPerspective: 1200 }}
+      style={{ x, y, rotate, rotateX, transformPerspective: 1200, willChange: "transform", backfaceVisibility: "hidden" }}
       drag={!busy.current}
       dragMomentum={false}
       dragElastic={0.9}
@@ -150,8 +150,8 @@ function TopCard({
       onTap={() => !busy.current && onTap?.()}
     >
       {children}
-      <motion.div className="pointer-events-none absolute inset-0 bg-like mix-blend-multiply" style={{ opacity: likeTint }} />
-      <motion.div className="pointer-events-none absolute inset-0 bg-nope mix-blend-multiply" style={{ opacity: nopeTint }} />
+      <motion.div className="pointer-events-none absolute inset-0 bg-like" style={{ opacity: likeTint }} />
+      <motion.div className="pointer-events-none absolute inset-0 bg-nope" style={{ opacity: nopeTint }} />
       <motion.div
         className="pointer-events-none absolute left-6 top-24 -rotate-12 text-like stamp text-3xl"
         style={{ opacity: likeOpacity }}
@@ -312,7 +312,7 @@ export function SwipeDeck<T>({
   if (!current) return <div className={cn("relative", className)}>{empty}</div>;
 
   return (
-    <div className={cn("relative select-none", className)} style={{ perspective: 1200 }}>
+    <div className={cn("relative select-none", className)}>
       {items
         .slice(index + 1, index + 3)
         .map((item, i) => (

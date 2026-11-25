@@ -1,12 +1,13 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ChevronsUp, RotateCcw, Star, Truck } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActionButtons } from "@/components/drip/ActionButtons";
 import { SwipeDeck, type SwipeDeckHandle, type SwipeDir } from "@/components/drip/SwipeDeck";
 import { TopBar } from "@/components/drip/TopBar";
-import { categories, formatPrice, getCategory, productsFor, type Product } from "@/lib/catalog";
-import { dripActions } from "@/lib/drip-store";
+import { useProducts, useSwipes, type CatalogProduct } from "@/hooks/use-drip-data";
+import { useSaved } from "@/hooks/use-saved";
+import { categories, formatPrice, getCategory } from "@/lib/catalog";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/discover/$category")({
@@ -42,7 +43,7 @@ export const Route = createFileRoute("/discover/$category")({
   component: CategoryDeck,
 });
 
-function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) {
+function ProductCard({ p, variantIndex }: { p: CatalogProduct; variantIndex: number }) {
   const v = p.variants[variantIndex % p.variants.length]!;
   return (
     <div className="relative size-full bg-card">
@@ -54,7 +55,7 @@ function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) 
         <span className="bg-signal rounded-full px-3 py-1.5 font-label text-[10px] font-extrabold text-primary-foreground">
           {p.match}% your vibe
         </span>
-        <div className="glass flex items-center gap-1.5 rounded-full px-3 py-2">
+        <div className="glass-flat flex items-center gap-1.5 rounded-full px-3 py-2">
           {p.variants.map((_, i) => (
             <span
               key={i}
@@ -65,7 +66,7 @@ function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) 
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-5">
-        <div key={v.brand} className="animate-rise">
+        <div>
           <div className="font-label text-[11px] font-extrabold text-primary">{v.brand}</div>
           <div className="font-display text-5xl leading-[0.95]">{p.name}</div>
           <div className="mt-3 flex items-center gap-3">
@@ -79,7 +80,7 @@ function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) 
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             {[v.fit, ...p.tags].map((t) => (
-              <span key={t} className="glass rounded-full px-2.5 py-1 text-[11px]">
+              <span key={t} className="glass-flat rounded-full px-2.5 py-1 text-[11px]">
                 {t}
               </span>
             ))}
@@ -97,34 +98,46 @@ function ProductCard({ p, variantIndex }: { p: Product; variantIndex: number }) 
 
 function CategoryDeck() {
   const { category } = Route.useLoaderData();
-  const items = productsFor(category.slug);
+  const products = useProducts(category.slug);
+  const items = products.data ?? [];
+  const saved = useSaved();
+  const swipes = useSwipes();
+  const swipeIds = useRef<Promise<string | null>[]>([]);
   const deck = useRef<SwipeDeckHandle>(null);
   const [variants, setVariants] = useState<Record<string, number>>({});
   const [index, setIndex] = useState(0);
+  const [canUndo, setCanUndo] = useState(false);
   const others = categories.filter((c) => c.slug !== category.slug);
 
-  const onSwipe = useCallback(
-    (dir: SwipeDir, p: Product): "stay" | void => {
-      const vi = (variants[p.id] ?? 0) % p.variants.length;
-      const v = p.variants[vi]!;
-      if (dir === "up") {
-        const next = (vi + 1) % p.variants.length;
-        setVariants((s) => ({ ...s, [p.id]: next }));
-        const nv = p.variants[next]!;
-        toast(`Now showing ${nv.brand}`, { description: `${p.name} · ${formatPrice(nv.price)}` });
-        return "stay";
-      }
-      if (dir === "right") {
-        dripActions.save({ key: `${p.id}-${v.brand}`, name: p.name, brand: v.brand, price: v.price, image: p.image, kind: "piece" });
-        toast.success("Saved to wishlist", { description: `${v.brand} · ${p.name}` });
-      }
-    },
-    [variants],
-  );
+  const variantOf = (p: CatalogProduct) => p.variants[(variants[p.id] ?? 0) % p.variants.length]!;
+
+  const onSwipe = (dir: SwipeDir, p: CatalogProduct): "stay" | void => {
+    if (dir === "up") {
+      // The card itself shows the new brand; keep this path free of extra work so the flip stays instant.
+      setVariants((s) => ({ ...s, [p.id]: ((s[p.id] ?? 0) + 1) % p.variants.length }));
+      return "stay";
+    }
+    const v = variantOf(p);
+    swipeIds.current.push(swipes.record(dir, { productId: p.id, variantId: v.id }));
+    if (dir === "right") {
+      saved.savePiece(p, v);
+      toast.success("Saved to wishlist", {
+        description: saved.signedIn ? `${v.brand} · ${p.name}` : `${v.brand} · ${p.name} — sign in to keep it on every device`,
+      });
+    }
+  };
+
+  const onUndo = (dir: SwipeDir, p: CatalogProduct) => {
+    void swipes.remove(swipeIds.current.pop() ?? null);
+    if (dir === "right") {
+      saved.unsavePiece(p, variantOf(p));
+      toast("Removed from wishlist", { description: p.name });
+    }
+  };
 
   return (
     <main className="flex h-dvh flex-col pb-24">
-      <TopBar back title={<span>{category.name} · {Math.min(index + 1, items.length)}/{items.length}</span>} />
+      <TopBar back title={<span>{category.name} · {items.length ? `${Math.min(index + 1, items.length)}/${items.length}` : "…"}</span>} />
 
       <div className="relative flex-1 px-3">
         <SwipeDeck
@@ -135,10 +148,26 @@ function CategoryDeck() {
           getKey={(p) => p.id}
           labels={{ left: "Nope", right: "Save", up: "Next brand" }}
           className="size-full"
+          loading={products.isLoading}
+          getImage={(p) => p.image}
           onIndexChange={setIndex}
+          onHistoryChange={setCanUndo}
+          onUndo={onUndo}
           renderCard={(p) => <ProductCard p={p} variantIndex={variants[p.id] ?? 0} />}
           onSwipe={onSwipe}
           empty={
+            products.isError ? (
+              <div className="flex size-full flex-col items-center justify-center rounded-[2rem] border border-dashed border-border px-6 text-center">
+                <div className="font-display text-4xl italic">Couldn’t load this drop.</div>
+                <button
+                  type="button"
+                  onClick={() => void products.refetch()}
+                  className="mt-5 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 font-label text-[10px] font-bold text-primary-foreground"
+                >
+                  <RotateCcw className="size-3.5" /> Try again
+                </button>
+              </div>
+            ) : (
             <div className="flex size-full flex-col items-center justify-center rounded-[2rem] border border-dashed border-border px-6 text-center">
               <div className="font-display text-5xl italic">All caught up.</div>
               <p className="mt-2 text-sm text-muted-foreground">Fresh {category.name.toLowerCase()} land every morning. Try another drop:</p>
@@ -162,11 +191,12 @@ function CategoryDeck() {
                 <RotateCcw className="size-3.5" /> Swipe again
               </button>
             </div>
+            )
           }
         />
       </div>
 
-      <ActionButtons className="mt-4" upLabel="Brand" onAction={(d) => deck.current?.swipe(d)} />
+      <ActionButtons className="mt-4" upLabel="Brand" canUndo={canUndo} onUndo={() => deck.current?.undo()} onAction={(d) => deck.current?.swipe(d)} />
     </main>
   );
 }

@@ -14,6 +14,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { BottomDock } from "@/components/drip/BottomDock";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider } from "@/hooks/use-auth";
+import { SavedSync } from "@/hooks/use-saved";
 
 function NotFoundComponent() {
   return (
@@ -132,11 +134,14 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <div className="app-frame">
-        <Outlet />
-        <BottomDock />
-      </div>
-      <Toaster position="top-center" />
+      <AuthProvider>
+        <SavedSync />
+        <div className="app-frame">
+          <Outlet />
+          <BottomDock />
+        </div>
+        <Toaster position="top-center" />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
